@@ -41,6 +41,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Magic Reviews needs to use your camera preview </string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
