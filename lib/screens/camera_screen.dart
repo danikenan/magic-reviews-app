@@ -18,21 +18,14 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   final TextDetector textDetector = GoogleMlKit.vision.textDetector();
   bool isBusy = false;
-  String text = '';
+  List<TextBlock> blocks = [];
   CustomPaint? customPaint;
 
   @override
   Widget build(BuildContext context) {
     var focusRect = getFoucsRect(context);
     return Scaffold(
-      bottomSheet: Container(
-          height: 40,
-          width: MediaQuery.of(context).size.width,
-          child: Center(
-              child: Text(
-            text,
-            // style: TextStyle(color: Colors.white),
-          ))),
+      bottomSheet: _buildBottomSheet(),
       body: Center(
         child: CameraView(
           camera: widget.camera,
@@ -43,7 +36,30 @@ class _CameraScreenState extends State<CameraScreen> {
           customPaint: customPaint,
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Add your onPressed code here!
+        },
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.pause),
+      ),
     );
+  }
+
+  Widget _buildBottomSheet() {
+    return Container(
+        height: MediaQuery.of(context).size.height / 2,
+        width: MediaQuery.of(context).size.width,
+        child: ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: blocks.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Container(
+                height: 50,
+                // color: Colors.amber[colorCodes[index]],
+                child: Center(child: Text('Entry ${blocks[index].text}')),
+              );
+            }));
   }
 
   Future<void> _processImage(InputImage inputImage, Rect focusRect) async {
@@ -60,18 +76,20 @@ class _CameraScreenState extends State<CameraScreen> {
     // print(
     //     'Found ${recognisedText.text} ${recognisedText.blocks.length} textBlocks');
 
-    var blocks = recognisedText.blocks;
+    var textBlocks = recognisedText.blocks
+        .where((b) =>
+            b.rect.bottom < focusRect.bottom && b.rect.top > focusRect.top)
+        .where((b) {
+      var t = b.text.trim().toUpperCase();
+      return t != "N" && t != 'TOP' && t != 'TOP\n10' && t != "NEW EPISODES";
+    }).toList();
     // .where((block) => isContained(focusRect, block.rect))
     // .toList();
-
-    var text = blocks.map((e) => e.text).join(" ");
-
-    // print(text);
 
     if (inputImage.inputImageData?.size != null &&
         inputImage.inputImageData?.imageRotation != null) {
       final painter = TextDetectorPainter(
-          blocks,
+          textBlocks,
           inputImage.inputImageData!.size,
           inputImage.inputImageData!.imageRotation);
       customPaint = CustomPaint(painter: painter);
@@ -81,7 +99,7 @@ class _CameraScreenState extends State<CameraScreen> {
     isBusy = false;
     if (mounted) {
       setState(() {
-        text = text;
+        blocks = textBlocks;
       });
     }
   }
